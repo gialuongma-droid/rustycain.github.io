@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>RUSTYCAIN Binary Analyzer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#02020a;--card:rgba(20,20,40,.55);--bd:rgba(130,140,255,.18);--cy:#22d3ee;--pu:#a78bfa;--tx:#e6e8ff;--mu:#7b7fa8;--glow:1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:18px 14px 40px}
+header{text-align:center;padding:14px 0 6px}
+.brand{font-size:clamp(34px,11vw,64px);font-weight:900;letter-spacing:.08em;margin:0;position:relative;display:inline-block;background:linear-gradient(90deg,#f33,#f90,#fe3,#3e5,#2de,#36f,#a4f,#f33);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rb 6s linear infinite,gl 6s linear infinite}
+.brand::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.85) 50%,transparent 60%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;animation:sh 3.5s ease-in-out infinite;mix-blend-mode:overlay}
+.glowoff .brand{animation:rb 6s linear infinite;filter:none}
+@keyframes rb{to{background-position:300% 0}}
+@keyframes sh{from{background-position:150% 0}to{background-position:-150% 0}}
+@keyframes gl{0%,100%{filter:drop-shadow(0 0 10px #f33)}16%{filter:drop-shadow(0 0 12px #f90)}33%{filter:drop-shadow(0 0 12px #fe3)}50%{filter:drop-shadow(0 0 12px #3e5)}66%{filter:drop-shadow(0 0 12px #2de)}83%{filter:drop-shadow(0 0 12px #a4f)}}
+.sub{letter-spacing:.5em;font-size:13px;color:var(--cy);margin:2px 0 4px;font-weight:600}
+.copy{font-size:11px;color:var(--mu)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:26px;padding:16px;margin:16px 0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 0 calc(24px*var(--glow)) rgba(120,90,255,.12)}
+.ch{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:20px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);box-shadow:0 0 calc(14px*var(--glow)) rgba(139,92,246,.6)}
+.ch h2{margin:0;font-size:14px;letter-spacing:.12em;color:var(--cy)}
+.st{margin-left:auto;font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--bd);color:var(--mu)}
+.st.Ready,.st.Completed{color:#4ade80;border-color:#4ade8066}.st.Invalid,.st.Error{color:#f87171;border-color:#f8717166}.st.Processing{color:#fbbf24;border-color:#fbbf2466}
+.row{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);border:1px solid var(--bd);border-radius:20px;padding:6px 6px 6px 14px}
+.row input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--tx);font:14px ui-monospace,Menlo,monospace;padding:10px 0}
+.row input::placeholder{color:#4a4d6e}
+.round{width:46px;height:46px;border-radius:50%;border:0;background:#0e2638;color:var(--cy);font-size:20px;cursor:pointer;flex:none}
+.meta{font-size:12px;color:var(--mu);margin:10px 4px 0;display:flex;gap:14px;flex-wrap:wrap;min-height:16px}
+.btn{min-height:52px;border-radius:99px;border:1px solid var(--bd);background:#0e2638;color:var(--tx);font-size:15px;font-weight:600;padding:0 18px;cursor:pointer;width:100%;margin-top:12px;transition:.2s}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:linear-gradient(90deg,#0891b2,#7c3aed);border:0;box-shadow:0 0 calc(18px*var(--glow)) rgba(124,58,237,.5);letter-spacing:.1em}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn.sm{width:auto;min-height:44px;margin:6px 6px 0 0;font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.two .btn{margin-top:0}
+h3.sec{font-size:12px;letter-spacing:.3em;color:var(--mu);text-align:center;margin:26px 0 -4px}
+.bar{height:10px;border-radius:99px;background:#0b0c1e;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--pu));transition:width .2s}
+.log{background:#05050f;border:1px solid var(--bd);border-radius:16px;padding:10px;font:11.5px/1.5 ui-monospace,Menlo,monospace;color:#9fb4ff;height:170px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+.stats{display:flex;justify-content:space-between;font-size:12px;color:var(--mu)}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,6,.7);display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal.on{display:flex}
+.sheet{background:#0b0b1c;border:1px solid var(--bd);border-radius:28px 28px 0 0;width:100%;max-width:560px;max-height:85vh;overflow:auto;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px))}
+.sheet h2{margin:0 0 10px;color:var(--cy);font-size:16px;letter-spacing:.1em}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #ffffff10;font-size:14px}
+.opt select,.opt input[type=range]{max-width:48%;background:#0e2638;color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px}
+.opt input[type=checkbox]{width:22px;height:22px;accent-color:#7c3aed}
+#toasts{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:0;right:0;z-index:30;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{background:#12122ae6;border:1px solid var(--bd);border-left:4px solid var(--cy);border-radius:14px;padding:12px 16px;font-size:13px;max-width:92%;animation:ti .3s}
+.toast.err{border-left-color:#f87171}.toast.ok{border-left-color:#4ade80}
+@keyframes ti{from{opacity:0;transform:translateY(-12px)}}
+.hide{display:none}
+.note{font-size:11px;color:var(--mu);text-align:center;margin-top:24px;line-height:1.6}
+@media(prefers-reduced-motion:reduce){.brand,.brand::after{animation-duration:20s}}
+
+.modal.dlg{align-items:center;padding:16px}
+.dlg .sheet{border-radius:28px;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;max-width:520px}
+.dh{display:flex;gap:14px;align-items:center;padding:20px 20px 8px}.dh .ic{width:54px;height:54px;border-radius:16px;font-size:24px}
+.dh h2{margin:0;color:var(--tx);font-size:22px;letter-spacing:0}.dh p{margin:2px 0 0;font-size:13px;color:var(--mu)}
+.dh .x{margin-left:auto;background:none;border:0;color:var(--mu);font-size:26px;cursor:pointer;align-self:flex-start}
+.db{overflow:auto;padding:4px 22px 10px;flex:1}
+.db h4{margin:18px 0 4px;font-size:12px;letter-spacing:.15em;color:var(--cy)}
+.db hr{border:0;border-top:1px solid #ffffff14;margin:14px 0}
+.tg{display:flex;justify-content:space-between;align-items:center;padding:13px 0;font-size:16px;min-height:52px}
+.tg.sub{padding-left:16px;border-left:1px solid #ffffff18;margin-left:2px}
+.tg input{display:none}.tg i{width:56px;height:32px;border-radius:99px;background:#241d3d;border:2px solid #4b3a8a;position:relative;flex:none;transition:.2s}
+.tg i::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:#6b5aa8;transition:.2s}
+.tg input:checked+i{background:#a855f7;border-color:#a855f7}.tg input:checked+i::after{left:28px;width:24px;height:24px;top:2px;background:#fff}
+.seg{display:flex;border:1px solid var(--bd);border-radius:99px;overflow:hidden;margin:6px 0}
+.seg button{flex:1;min-height:48px;background:none;border:0;border-right:1px solid var(--bd);color:var(--tx);font-weight:600;font-size:15px;cursor:pointer}
+.seg button:last-child{border:0}.seg button.on{background:#1b3a4d}.seg button.on::before{content:"✓ "}
+.lbl{font-size:13px;color:var(--mu);margin-top:8px}
+.fld{background:#241f45;border:0;border-bottom:1px solid #aab;color:var(--tx);font-size:19px;padding:10px 14px;width:calc(100% - 16px);margin:6px 0 6px 16px;border-radius:4px 4px 0 0}
+.df{display:flex;justify-content:flex-end;align-items:center;gap:14px;padding:14px 20px;border-top:1px solid #ffffff14}
+.df .c{background:none;border:0;color:#a855f7;font-size:16px;font-weight:600;cursor:pointer;padding:10px}
+.df .ok{background:#a855f7;border:0;color:#fff;font-size:17px;font-weight:600;border-radius:99px;min-height:50px;padding:0 30px;cursor:pointer}
+.modal.full{padding:0;align-items:stretch;background:#04040e}
+.full .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;border:0;background:transparent;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 30px}
+.back{display:flex;align-items:center;gap:20px;font-size:22px;font-weight:700;margin:18px 4px 22px}.back button{background:none;border:0;color:var(--mu);font-size:28px;cursor:pointer}
+.od{display:flex;align-items:center;gap:10px;margin-bottom:6px}.od h2{margin:0;font-size:14px}
+</style></head><body>
+<canvas id="sky"></canvas><div id="toasts"></div>
+<main>
+<header><h1 class="brand">RUSTYCAIN</h1><div class="copy">© RUSTYCAIN</div><div class="sub">BINARY ANALYZER</div></header>
+
+<section class="card" id="c-il2cpp"><div class="ch"><div class="ic">📄</div><h2>IL2CPP BINARY</h2><span class="st" id="s-il2cpp">Ready</span></div>
+<div class="row"><input id="p-il2cpp" placeholder="Enter libil2cpp.so Path" readonly><button class="round" data-pick="il2cpp" aria-label="Choose file">📂</button></div>
+<div class="meta" id="m-il2cpp"></div>
+<input type="file" id="f-il2cpp" class="hide">
+<button class="btn pri" data-run="il2cpp" disabled>DUMP IL2CPP</button><button class="btn" data-clear="il2cpp">Clear</button></section>
+
+<section class="card" id="c-meta"><div class="ch"><div class="ic">🗄️</div><h2>METADATA</h2><span class="st" id="s-meta">Ready</span></div>
+<div class="row"><input id="p-meta" placeholder="Enter global-metadata.dat Path" readonly><button class="round" data-pick="meta" aria-label="Choose file">📂</button></div>
+<div class="meta" id="m-meta"></div>
+<input type="file" id="f-meta" class="hide">
+<button class="btn pri" data-run="meta" disabled>DUMP METADATA</button><button class="btn" data-clear="meta">Clear</button></section>
+
+<div class="two"><button class="btn" id="b-opts">⚙ Dump Options</button><button class="btn" id="b-set">⚙ Settings</button></div>
+
+<h3 class="sec">INDEPENDENT MODULE</h3>
+<section class="card" id="c-ac"><div class="ch"><div class="ic">🛡️</div><h2>ANTI-CHEAT ANALYSIS</h2><span class="st" id="s-ac">Ready</span></div>
+<div class="row"><input id="p-ac" placeholder="Enter Anti-Cheat File Path" readonly><button class="round" data-pick="ac" aria-label="Choose file">📂</button></div>
+<div class="meta" id="m-ac"></div>
+<input type="file" id="f-ac" class="hide">
+<button class="btn pri" data-run="ac" disabled>ANALYZE ANTI-CHEAT</button><button class="btn" data-clear="ac">Clear</button>
+<div class="note" style="margin-top:10px">Static, read-only file inspection. No bypass, injection or memory features.</div></section>
+
+<section class="card hide" id="res"><div class="ch"><div class="ic">📊</div><h2>RESULTS</h2><span class="st" id="r-state">Initializing...</span></div>
+<div class="stats"><span id="r-op">—</span><span id="r-pct">0%</span></div><div class="bar"><i id="r-bar"></i></div>
+<div class="stats"><span>Items: <b id="r-items">0</b></span><span>Time: <b id="r-time">0 ms</b></span></div>
+<div class="log" id="log" style="margin-top:10px"></div>
+<div id="r-act" class="hide"><button class="btn sm" id="a-rep">Download Report</button><button class="btn sm" id="a-json">Export JSON</button><button class="btn sm" id="a-txt">Export TXT</button><button class="btn sm" id="a-clr">Clear Results</button></div></section>
+
+<div class="note">Local mode: files are analyzed entirely in your browser and never uploaded.<br>A browser cannot read Android system paths directly — use Choose File.</div>
+</main>
+
+<div class="modal dlg" id="m-opts"><div class="sheet"><div class="dh"><div class="ic">⚙</div><div><h2>Dump Options</h2><p>Configure what gets included in the dump output.</p></div><button class="x" id="o-x" aria-label="Close">✕</button></div><div class="db"><h4>OUTPUT</h4><label class="tg">Dump Methods<input type="checkbox" data-k="methods" checked><i></i></label><label class="tg">Dump Fields<input type="checkbox" data-k="fields" checked><i></i></label><label class="tg">Dump Properties<input type="checkbox" data-k="props" checked><i></i></label><label class="tg">Dump Attributes<input type="checkbox" data-k="attrs" checked><i></i></label><label class="tg">Method Offsets<input type="checkbox" data-k="mOff" checked><i></i></label><label class="tg">Field Offsets<input type="checkbox" data-k="fOff" checked><i></i></label><label class="tg">TypeDef Index<input type="checkbox" data-k="tdIdx" checked><i></i></label><label class="tg">Assembly Name<input type="checkbox" data-k="asm" checked><i></i></label><label class="tg">Split Per Type<input type="checkbox" data-k="split"><i></i></label><hr><h4>GENERATION</h4><label class="tg">Generate Struct<input type="checkbox" data-k="struct" checked><i></i></label><label class="tg">Generate Dummy DLL<input type="checkbox" data-k="dll" checked><i></i></label><label class="tg">Dummy DLL Add Token<input type="checkbox" data-k="dllTok" checked><i></i></label><hr><h4>C++ HEADERS</h4><label class="tg">Generate Unity Headers<input type="checkbox" data-k="unityH" checked><i></i></label><label class="tg">Generate C++ Scaffold<input type="checkbox" data-k="scaffold" checked><i></i></label><label class="tg">Mangle Names<input type="checkbox" data-k="mangle" checked><i></i></label><label class="tg">Enhanced IDA Metadata<input type="checkbox" data-k="ida" checked><i></i></label><label class="tg">Topological Sort<input type="checkbox" data-k="topo" checked><i></i></label><div class="lbl">Compiler Layout</div><div class="seg" data-k="layout" data-val="GCC"><button type="button" data-v="GCC" class=on>GCC</button><button type="button" data-v="MSVC">MSVC</button></div><hr><label class="tg">Enable Disassembly<input type="checkbox" data-k="disasm"><i></i></label><div class="lbl" style="margin-left:16px">Output Target</div><div class="seg" style="margin-left:16px" data-k="target" data-val="Both"><button type="button" data-v="Both" class=on>Both</button><button type="button" data-v="dump.cs">dump.cs</button><button type="button" data-v="DiffableCs">DiffableCs</button></div><label class="tg sub">Hex Bytes<input type="checkbox" data-k="hex" checked><i></i></label><label class="tg sub">Field Names<input type="checkbox" data-k="fnames" checked><i></i></label><label class="tg sub">Annotations<input type="checkbox" data-k="annot" checked><i></i></label><label class="tg sub">CFG Analysis<input type="checkbox" data-k="cfg" checked><i></i></label><div class="lbl" style="margin-left:16px">Max Instructions</div><input class="fld" data-k="maxIns" value="512"><hr><h4>STATIC FIELD METADATA</h4><label class="tg">Export Thread-Static / FieldRVA<input type="checkbox" data-k="tls"><i></i></label><label class="tg sub">Include FieldRVA Hex Data<input type="checkbox" data-k="rvaHex"><i></i></label><div class="lbl" style="margin-left:16px">Max FieldRVA Dump Bytes</div><input class="fld" data-k="maxRva" value="4096"><hr><h4>ADVANCED</h4><label class="tg">Force IL2CPP Version<input type="checkbox" data-k="forceVer"><i></i></label><div class="lbl" style="margin-left:16px">IL2CPP Version</div><input class="fld" data-k="ver" value="24,3"><label class="tg">Force Dump<input type="checkbox" data-k="force"><i></i></label><label class="tg">No Redirected Pointer<input type="checkbox" data-k="noRedir"><i></i></label><label class="tg">Force CODM Metadata Variant<input type="checkbox" data-k="codm"><i></i></label><hr><h4>REPORT</h4><label class="tg">Output format<select id="o-fmt" class="fld" style="width:140px;margin:0"><option>JSON</option><option>TXT</option></select></label><label class="tg">Verbose mode<input type="checkbox" id="o-verb"><i></i></label><label class="tg">Include strings<input type="checkbox" id="o-str" checked><i></i></label><label class="tg">Include symbols<input type="checkbox" id="o-sym" checked><i></i></label><label class="tg">Generate report<input type="checkbox" id="o-rep" checked><i></i></label><label class="tg">Auto-clear results<input type="checkbox" id="o-auto"><i></i></label></div><div class="df"><button class="c" id="o-cancel">Cancel</button><button class="ok" id="o-ok">OK</button></div></div></div>
+
+<div class="modal full" id="m-set"><div class="sheet"><div class="back"><button id="set-back" aria-label="Back">←</button>Settings</div>
+<div class="card" style="margin-top:0"><div class="od"><span style="font-size:22px">📂</span><h2 style="color:var(--cy);letter-spacing:.1em">OUTPUT DIRECTORY</h2><button class="round" id="od-pick" style="margin-left:auto" aria-label="Choose folder">⬆</button></div>
+<div class="lbl" style="margin:0 0 10px">Where dump results are saved</div>
+<div class="row"><input id="outdir" value="/storage/emulated/0/IL2CppDumper" style="color:#fff"><span style="color:var(--cy);font-size:22px;padding-right:8px">✔</span></div>
+<div class="meta">Browsers save exports to the Downloads folder; this path is stored in each report.</div></div>
+<h2 style="font-size:13px;letter-spacing:.15em;color:var(--cy);margin:22px 4px 0">APPEARANCE &amp; PERFORMANCE</h2>
+<div style="display:flex;gap:8px"><button class="btn sm" id="pre-hq">High Quality</button><button class="btn sm" id="pre-perf">Performance Mode</button></div>
+<div class="opt">Background animation<input type="checkbox" id="s-bg" checked></div>
+<div class="opt">Glow<input type="checkbox" id="s-glow" checked></div>
+<div class="opt">Theme intensity<input type="range" id="s-theme" min="0.2" max="1.5" step="0.1" value="1"></div>
+<div class="opt">Animation intensity<input type="range" id="s-anim" min="0.2" max="1.5" step="0.1" value="1"></div>
+<div class="opt">Particle amount<input type="range" id="s-part" min="0.1" max="1.5" step="0.1" value="1"></div>
+<div class="opt">Shooting-star frequency<input type="range" id="s-shoot" min="0.2" max="3" step="0.1" value="1.5"></div>
+<div class="opt">Performance mode<input type="checkbox" id="s-perf"></div>
+<button class="btn pri" id="set-done">DONE</button></div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const S={bg:true,glow:true,theme:1,anim:1,part:1,shoot:1.5,perf:false};
+const weak=(navigator.hardwareConcurrency||4)<=4||(navigator.deviceMemory||4)<=3;
+if(weak){S.perf=true;S.part=.5;S.shoot=1}
+/* ---------- toasts ---------- */
+function toast(m,t=""){const d=document.createElement("div");d.className="toast "+t;d.textContent=m;$("#toasts").appendChild(d);setTimeout(()=>d.remove(),4200)}
+/* ---------- sky ---------- */
+const cv=$("#sky"),cx=cv.getContext("2d");let W,H,stars=[],shoots=[],last=0,raf=0,dpr=1;
+function rs(){dpr=Math.min(devicePixelRatio||1,S.perf?1:1.5);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);mk()}
+function mk(){const n=Math.floor(W*H/4500*S.part*(S.perf?.6:1));stars=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.2,a:Math.random()*.8+.2,z:Math.random()*.25+.03,t:Math.random()*6.28,s:Math.random()<.3?Math.random()*2+.5:0}))}
+function spawn(){const sp=(Math.random()<.3?1400:500)*(0.6+Math.random()*.8),ang=(Math.random()*50+10)*Math.PI/180*(Math.random()<.5?1:-1)+(Math.random()<.5?0:Math.PI);
+ shoots.push({x:Math.random()*W,y:Math.random()*H*.7,vx:Math.cos(ang)*sp,vy:Math.abs(Math.sin(ang))*sp,len:40+Math.random()*160,life:0,max:.5+Math.random()*1,hue:Math.floor(Math.random()*4)*40+180,w:Math.random()*1.6+.6})}
+function frame(t){raf=requestAnimationFrame(frame);const gap=1000/(S.perf?30:60);if(t-last<gap)return;const dt=Math.min((t-last)/1000,.05);last=t;
+ cx.clearRect(0,0,W,H);if(!S.bg)return;
+ for(const s of stars){s.y+=s.z*dt*20*S.anim;if(s.y>H)s.y=0;s.t+=dt*s.s*S.anim;const a=s.a*(s.s?.6+.4*Math.sin(s.t*3):1);cx.globalAlpha=a;cx.fillStyle="#cfe";cx.fillRect(s.x,s.y,s.r,s.r)}
+ cx.globalAlpha=1;
+ const rate=S.shoot*(S.perf?.6:1)*S.anim;if(Math.random()<rate*dt*2.5&&shoots.length<(S.perf?5:14))spawn();
+ cx.lineCap="round";
+ for(let i=shoots.length-1;i>=0;i--){const m=shoots[i];m.life+=dt;m.x+=m.vx*dt;m.y+=m.vy*dt;const k=m.life/m.max;
+  if(k>=1||m.x<-300||m.x>W+300||m.y>H+300){shoots.splice(i,1);continue}
+  const f=Math.sin(Math.PI*k),L=Math.hypot(m.vx,m.vy),ux=m.vx/L,uy=m.vy/L,tx=m.x-ux*m.len,ty=m.y-uy*m.len;
+  const g=cx.createLinearGradient(m.x,m.y,tx,ty);g.addColorStop(0,`hsla(${m.hue},100%,85%,${f})`);g.addColorStop(.3,`hsla(${m.hue},100%,60%,${f*.5})`);g.addColorStop(1,`hsla(${m.hue},100%,50%,0)`);
+  cx.strokeStyle=g;cx.lineWidth=m.w;if(S.glow&&!S.perf){cx.shadowColor=`hsl(${m.hue},100%,60%)`;cx.shadowBlur=8}else cx.shadowBlur=0;
+  cx.beginPath();cx.moveTo(m.x,m.y);cx.lineTo(tx,ty);cx.stroke()}
+ cx.shadowBlur=0}
+addEventListener("resize",()=>{clearTimeout(rs.t);rs.t=setTimeout(rs,200)});
+document.addEventListener("visibilitychange",()=>{cancelAnimationFrame(raf);if(!document.hidden){last=0;raf=requestAnimationFrame(frame)}});
+rs();raf=requestAnimationFrame(frame);
+/* ---------- settings ---------- */
+function apply(){document.documentElement.style.setProperty("--glow",S.glow?S.theme:0);document.body.classList.toggle("glowoff",!S.glow);
+ document.documentElement.style.setProperty("--card",`rgba(20,20,40,${.35+.2*S.theme})`);mk()}
+const bind=(id,k,ty)=>{const e=$(id);e.onchange=e.oninput=()=>{S[k]=ty?e.checked:parseFloat(e.value);if(k==="perf"&&S.perf){S.part=Math.min(S.part,.4);S.anim=.6;S.shoot=Math.min(S.shoot,.8)}apply();sync();if(k==="perf")rs()}};
+[["#s-bg","bg",1],["#s-glow","glow",1],["#s-perf","perf",1],["#s-theme","theme"],["#s-anim","anim"],["#s-part","part"],["#s-shoot","shoot"]].forEach(a=>bind(...a));
+function sync(){$("#s-bg").checked=S.bg;$("#s-glow").checked=S.glow;$("#s-perf").checked=S.perf;$("#s-theme").value=S.theme;$("#s-anim").value=S.anim;$("#s-part").value=S.part;$("#s-shoot").value=S.shoot}
+$("#pre-hq").onclick=()=>{Object.assign(S,{bg:true,glow:true,theme:1,anim:1,part:1.2,shoot:2,perf:false});sync();apply();rs();toast("High Quality preset","ok")};
+$("#pre-perf").onclick=()=>{Object.assign(S,{bg:true,glow:false,theme:.6,anim:.6,part:.3,shoot:.7,perf:true});sync();apply();rs();toast("Performance Mode on","ok")};
+sync();apply();
+const open=id=>$(id).classList.add("on");
+$("#b-opts").onclick=()=>open("#m-opts");$("#b-set").onclick=()=>open("#m-set");
+$$(".modal:not(#m-opts)").forEach(m=>{m.onclick=e=>{if(e.target===m||e.target.hasAttribute("data-close"))m.classList.remove("on")}});
+
+/* dump options dialog */
+const OPTS=$("#m-opts");let snap=null;
+const getO=()=>{const o={};$$("#m-opts [data-k]").forEach(e=>{o[e.dataset.k]=e.type==="checkbox"?e.checked:e.classList.contains("seg")?e.dataset.val:e.value});return o};
+const setO=o=>$$("#m-opts [data-k]").forEach(e=>{const v=o[e.dataset.k];if(e.type==="checkbox")e.checked=v;else if(e.classList.contains("seg"))segSet(e,v);else e.value=v});
+function segSet(g,v){g.dataset.val=v;[...g.children].forEach(b=>b.classList.toggle("on",b.dataset.v===v))}
+$$(".seg").forEach(g=>g.onclick=e=>{const b=e.target.closest("button");if(b)segSet(g,b.dataset.v)});
+const snapO=()=>({o:getO(),r:["o-fmt","o-verb","o-str","o-sym","o-rep","o-auto"].map(i=>{const e=$("#"+i);return e.type==="checkbox"?e.checked:e.value})});
+$("#b-opts").onclick=()=>{snap=snapO();open("#m-opts")};
+function cancelO(){if(snap){setO(snap.o);["o-fmt","o-verb","o-str","o-sym","o-rep","o-auto"].forEach((i,n)=>{const e=$("#"+i);e.type==="checkbox"?e.checked=snap.r[n]:e.value=snap.r[n]})}OPTS.classList.remove("on")}
+OPTS.onclick=e=>{if(e.target===OPTS)cancelO()};$("#o-cancel").onclick=$("#o-x").onclick=cancelO;
+$("#o-ok").onclick=()=>{OPTS.classList.remove("on");toast("Dump options saved","ok")};
+$("#set-back").onclick=$("#set-done").onclick=()=>$("#m-set").classList.remove("on");
+$("#od-pick").onclick=async()=>{try{if(window.showDirectoryPicker){const d=await showDirectoryPicker();$("#outdir").value="/"+d.name}else toast("Folder picker not supported in this browser — edit the path manually")}catch(x){}};
+/* ---------- files ---------- */
+const MAX=1.5*1024**3,files={},report={};
+const fmt=n=>n<1024?n+" B":n<1048576?(n/1024).toFixed(1)+" KB":n<1073741824?(n/1048576).toFixed(2)+" MB":(n/1073741824).toFixed(2)+" GB";
+function setSt(k,v){const e=$("#s-"+k);e.textContent=v;e.className="st "+v}
+$$("[data-pick]").forEach(b=>b.onclick=()=>$("#f-"+b.dataset.pick).click());
+$$("[data-clear]").forEach(b=>b.onclick=()=>clearFile(b.dataset.clear));
+function clearFile(k){delete files[k];$("#f-"+k).value="";$("#p-"+k).value="";$("#m-"+k).textContent="";setSt(k,"Ready");$(`[data-run=${k}]`).disabled=true}
+["il2cpp","meta","ac"].forEach(k=>$("#f-"+k).onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ $("#p-"+k).value=f.name;files[k]=f;const btn=$(`[data-run=${k}]`);btn.disabled=true;
+ let err=null;if(f.size===0)err="File is empty";else if(f.size>MAX)err="File too large (max 1.5 GB)";
+ else try{const h=new Uint8Array(await f.slice(0,64).arrayBuffer());
+  if(k!=="meta"&&!(h[0]===0x7f&&h[1]===69&&h[2]===76&&h[3]===70)){err="Not an ELF file"}
+  if(k==="meta"&&!(h[0]===0xAF&&h[1]===0x1B&&h[2]===0xB1&&h[3]===0xFA)){err="Not a global-metadata.dat (bad magic)"}
+  let ty="";if(k!=="meta"&&!err)ty=" · "+(h[4]===2?"64-bit":"32-bit")+" ELF";
+  $("#m-"+k).textContent=`${f.name} · ${fmt(f.size)}${ty}`}catch(x){err="Cannot read file (permission denied or corrupted)"}
+ if(err){setSt(k,"Invalid");toast(err,"err");$("#m-"+k).textContent=`${f.name} · ${fmt(f.size)}`}else{setSt(k,"Ready");btn.disabled=false;toast("File accepted","ok")}});
+/* ---------- parsers ---------- */
+const MACH={3:"x86",8:"MIPS",40:"ARM",62:"x86-64",183:"AArch64",243:"RISC-V"};
+const SHT={0:"NULL",1:"PROGBITS",2:"SYMTAB",3:"STRTAB",4:"RELA",5:"HASH",6:"DYNAMIC",7:"NOTE",8:"NOBITS",9:"REL",11:"DYNSYM"};
+async function parseELF(f,log){
+ const head=await f.slice(0,64).arrayBuffer(),dv=new DataView(head),is64=dv.getUint8(4)===2,le=dv.getUint8(5)!==2;
+ const o={class:is64?"ELF64":"ELF32",endian:le?"little":"big",type:dv.getUint16(16,le),machine:dv.getUint16(18,le)};
+ o.arch=MACH[o.machine]||("machine "+o.machine);o.typeName={1:"REL",2:"EXEC",3:"DYN (shared object)"}[o.type]||o.type;
+ const shoff=is64?Number(dv.getBigUint64(40,le)):dv.getUint32(32,le),shentsize=dv.getUint16(is64?58:46,le),shnum=dv.getUint16(is64?60:48,le),shstr=dv.getUint16(is64?62:50,le);
+ o.sections=[];o.imports=[];o.exports=[];o.needed=[];o.symbols=0;
+ if(!shoff||!shnum||shoff+shnum*shentsize>f.size){log("Section headers missing/stripped");return o}
+ const sb=new DataView(await f.slice(shoff,shoff+shnum*shentsize).arrayBuffer());
+ const sh=[];for(let i=0;i<shnum;i++){const b=i*shentsize;sh.push(is64?{name:sb.getUint32(b,le),type:sb.getUint32(b+4,le),flags:Number(sb.getBigUint64(b+8,le)),addr:Number(sb.getBigUint64(b+16,le)),off:Number(sb.getBigUint64(b+24,le)),size:Number(sb.getBigUint64(b+32,le)),link:sb.getUint32(b+40,le),ent:Number(sb.getBigUint64(b+56,le))}:
+  {name:sb.getUint32(b,le),type:sb.getUint32(b+4,le),flags:sb.getUint32(b+8,le),addr:sb.getUint32(b+12,le),off:sb.getUint32(b+16,le),size:sb.getUint32(b+20,le),link:sb.getUint32(b+24,le),ent:sb.getUint32(b+36,le)})}
+ const rd=async s=>(s.off+s.size<=f.size&&s.type!==8)?new Uint8Array(await f.slice(s.off,s.off+Math.min(s.size,16*1048576)).arrayBuffer()):new Uint8Array(0);
+ const cs=(u,p)=>{let e=p;while(e<u.length&&u[e])e++;return new TextDecoder().decode(u.subarray(p,e))};
+ const names=sh[shstr]?await rd(sh[shstr]):new Uint8Array(0);
+ sh.forEach(s=>{s.n=cs(names,s.name)});
+ o.sections=sh.map(s=>({name:s.n,type:SHT[s.type]||s.type,addr:"0x"+s.addr.toString(16),offset:s.off,size:s.size,flags:(s.flags&1?"W":"")+(s.flags&2?"A":"")+(s.flags&4?"X":"")}));
+ for(const s of sh){
+  if(s.type===11){const st=await rd(s),str=await rd(sh[s.link]),es=s.ent||(is64?24:16),v=new DataView(st.buffer);
+   for(let i=1;i*es<st.length&&o.symbols<20000;i++){const b=i*es,nm=v.getUint32(b,le),shn=v.getUint16(b+(is64?6:14),le),n=cs(str,nm);if(!n)continue;o.symbols++;(shn===0?o.imports:o.exports).push(n)}}
+  if(s.type===6){const d=await rd(s),str=await rd(sh[s.link]),v=new DataView(d.buffer),es=is64?16:8;
+   for(let b=0;b+es<=d.length;b+=es){const tag=is64?Number(v.getBigInt64(b,le)):v.getInt32(b,le),val=is64?Number(v.getBigUint64(b+8,le)):v.getUint32(b+4,le);if(tag===0)break;if(tag===1)o.needed.push(cs(str,val))}}}
+ return o}
+async function strings(f,log,max=400){const lim=Math.min(f.size,12*1048576),u=new Uint8Array(await f.slice(0,lim).arrayBuffer()),out=[];let s="";
+ for(let i=0;i<u.length&&out.length<max;i++){const c=u[i];if(c>=32&&c<127)s+=String.fromCharCode(c);else{if(s.length>=6)out.push(s.slice(0,160));s=""}}
+ if(lim<f.size)log(`Strings: scanned first ${fmt(lim)} only`);return out}
+async function hashes(f){if(f.size>512*1048576||!crypto.subtle)return{sha256:"skipped (file too large or insecure context)"};const d=await crypto.subtle.digest("SHA-256",await f.arrayBuffer());return{sha256:[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}}
+async function parseMeta(f){const dv=new DataView(await f.slice(0,Math.min(f.size,512)).arrayBuffer()),o={magic:"0x"+dv.getUint32(0,true).toString(16).toUpperCase(),version:dv.getInt32(4,true),regions:[]};
+ if(o.version<15||o.version>40)throw new Error("Unsupported/corrupted metadata version "+o.version);
+ for(let i=0;8+i*8+8<=dv.byteLength&&i<40;i++){const off=dv.getInt32(8+i*8,true),sz=dv.getInt32(16+i*8,true);
+  if(off<=0||sz<0||off+sz>f.size){if(i>4)break;continue}o.regions.push({index:i,offset:off,size:sz})}
+ if(!o.regions.length)throw new Error("No valid header regions (file corrupted)");
+ o.regions.slice(0,3).forEach((r,i)=>r.name=["stringLiteral","stringLiteralData","string"][r.index]||"");return o}
+/* ---------- runner ---------- */
+let busy=false,cur=null;
+const opt=()=>({fmt:$("#o-fmt").value,verb:$("#o-verb").checked,str:$("#o-str").checked,sym:$("#o-sym").checked,rep:$("#o-rep").checked,auto:$("#o-auto").checked});
+const tick=()=>new Promise(r=>setTimeout(r,60));
+function prog(p,state,op){$("#r-bar").style.width=p+"%";$("#r-pct").textContent=Math.round(p)+"%";$("#r-state").textContent=state;$("#r-op").textContent=op||state}
+function log(m){const l=$("#log");l.textContent+=`[${new Date().toLocaleTimeString()}] ${m}\n`;l.scrollTop=l.scrollHeight}
+$$("[data-run]").forEach(b=>b.onclick=()=>run(b.dataset.run));
+async function run(k){if(busy)return;const f=files[k];if(!f){toast("Choose a file first","err");return}
+ busy=true;const o=opt(),t0=performance.now(),btn=$(`[data-run=${k}]`);btn.disabled=true;setSt(k,"Processing");
+ $("#res").classList.remove("hide");$("#r-act").classList.add("hide");$("#log").textContent="";$("#r-items").textContent="0";
+ const R={tool:"RUSTYCAIN Binary Analyzer",options:getO(),outputDir:$("#outdir").value,module:k,mode:"local-browser",file:{name:f.name,size:f.size},generated:new Date().toISOString()};
+ try{prog(5,"Initializing...");log("Module: "+k.toUpperCase());await tick();
+  prog(20,"Reading file...");log(`Reading ${f.name} (${fmt(f.size)})`);await tick();
+  if(k==="meta"){prog(45,"Analyzing...");R.header=await parseMeta(f);log(`Metadata version ${R.header.version}, ${R.header.regions.length} regions`);R.items=R.header.regions.length}
+  else{prog(40,"Analyzing...");const e=await parseELF(f,log);R.elf=e;log(`${e.class} ${e.arch} ${e.typeName}, ${e.sections.length} sections`);
+   if(o.sym||k==="ac"){log(`Dynamic symbols: ${e.imports.length} imports, ${e.exports.length} exports`)}
+   prog(60,"Analyzing...");
+   if(o.str||k==="ac"){R.strings=await strings(f,log);log(`Strings: ${R.strings.length}`)}
+   if(k==="il2cpp"){const ex=e.exports.filter(n=>n.startsWith("il2cpp_")),sx=(R.strings||[]).filter(s=>/il2cpp|unity/i.test(s));
+    R.il2cpp={apiExports:ex,hints:sx.slice(0,20),looksLikeIl2cpp:ex.length>0||sx.length>0};log(R.il2cpp.looksLikeIl2cpp?`IL2CPP indicators found (${ex.length} API exports)`:"No IL2CPP indicators found");
+    if(!o.sym){delete e.imports;delete e.exports}}
+   if(k==="ac"){const all=e.imports.concat(e.exports);R.security={stripped:e.symbols===0,sectionsWX:e.sections.filter(s=>s.flags.includes("W")&&s.flags.includes("X")).map(s=>s.name),usesPtrace:all.some(n=>/ptrace/.test(n)),usesDlopen:all.some(n=>/dlopen/.test(n))};log("Basic properties computed")}
+   R.items=e.sections.length+e.symbols;
+   prog(80,"Analyzing...");R.hashes=await hashes(f);log("SHA-256: "+R.hashes.sha256)}
+  if(o.verb)log("Verbose: "+JSON.stringify(R).length+" bytes of report data");
+  prog(92,"Generating report...");await tick();R.timeMs=Math.round(performance.now()-t0);cur=R;report[k]=R;
+  $("#r-items").textContent=R.items||0;$("#r-time").textContent=R.timeMs+" ms";prog(100,"Completed","Done");log("Completed");setSt(k,"Completed");
+  $("#r-act").classList.remove("hide");toast("Analysis completed","ok");
+  if(o.auto)setTimeout(clearRes,15000);
+  $("#res").scrollIntoView({behavior:"smooth"})}
+ catch(x){console.error(x);setSt(k,"Error");prog(0,"Error","Failed");log("ERROR: "+x.message);toast("Analysis failed: "+x.message,"err")}
+ finally{busy=false;btn.disabled=false}}
+function clearRes(){cur=null;$("#res").classList.add("hide");$("#log").textContent=""}
+$("#a-clr").onclick=clearRes;
+function dl(name,text,type){const u=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function toTxt(r,ind=""){return Object.entries(r).map(([k,v])=>v&&typeof v==="object"?`${ind}${k}:\n`+(Array.isArray(v)?v.map(x=>typeof x==="object"?ind+"  - "+JSON.stringify(x):ind+"  - "+x).join("\n"):toTxt(v,ind+"  ")):`${ind}${k}: ${v}`).join("\n")}
+const base=()=>cur.module+"_"+cur.file.name.replace(/[^\w.-]/g,"_");
+$("#a-json").onclick=()=>cur&&dl(base()+".json",JSON.stringify(cur,null,2),"application/json");
+$("#a-txt").onclick=()=>cur&&dl(base()+".txt",toTxt(cur),"text/plain");
+$("#a-rep").onclick=()=>{if(!cur)return;opt().fmt==="TXT"?dl(base()+"_report.txt",toTxt(cur),"text/plain"):dl(base()+"_report.json",JSON.stringify(cur,null,2),"application/json")};
+addEventListener("error",e=>toast("Unexpected error: "+e.message,"err"));
+addEventListener("unhandledrejection",e=>toast("Unexpected error: "+(e.reason&&e.reason.message||e.reason),"err"));
+</script></body></html>
